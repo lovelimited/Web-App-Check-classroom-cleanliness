@@ -89,8 +89,8 @@ function doPost(e) {
       }
     }
     
-    // Append row
-    sheet.appendRow([now, dateStr, timeStr, room, score, monthStr, academicYearStr]);
+    // Append row - ใช้ ' นำหน้าเพื่อให้ Google Sheets มองเป็นข้อความธรรมดา (Plain Text) ไม่แปลงเป็นวันที่เอง
+    sheet.appendRow([now, "'" + dateStr, timeStr, room, score, "'" + monthStr, "'" + academicYearStr]);
     
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
@@ -126,14 +126,21 @@ function doGet(e) {
           dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
         }
 
+        // จัดการเรื่องเดือนให้เป็น String รูปแบบ YYYY-MM เสมอ
+        let m = row[5];
+        let monthStr = m;
+        if (m instanceof Date) {
+          monthStr = m.getFullYear() + "-" + String(m.getMonth() + 1).padStart(2, '0');
+        }
+
         return {
           timestamp: row[0],
           date: dateStr,
           time: row[2],
           room: row[3],
           score: row[4],
-          month: row[5],
-          academicYear: row[6]
+          month: monthStr,
+          academicYear: row[6].toString() // แปลงปีการศึกษาเป็น String เสมอ
         };
       });
     }
