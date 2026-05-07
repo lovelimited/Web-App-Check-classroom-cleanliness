@@ -198,30 +198,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="card flex items-center gap-5">
-              <div className="bg-blue-50 p-4 rounded-full">
-                <TrendingUp size={28} className="text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">คะแนนเฉลี่ยรวม</p>
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {data.length > 0 ? (data.reduce((acc, curr) => acc + curr.score, 0) / data.length).toFixed(2) : '0.00'}
-                </h3>
-              </div>
-            </div>
-            <div className="card flex items-center gap-5">
-              <div className="bg-emerald-50 p-4 rounded-full">
-                <Award size={28} className="text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">ห้องที่คะแนนดีสุด</p>
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {getRoomData().length > 0 ? [...getRoomData()].sort((a, b) => b.average - a.average)[0].room : '-'}
-                </h3>
-              </div>
-            </div>
-          </div>
+
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="card">
