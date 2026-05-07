@@ -14,26 +14,18 @@ function CheckScore() {
   const [loading, setLoading] = useState(false);
 
   const validRooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
+  const currentRoom = room && validRooms.includes(room) ? room : validRooms[0];
 
-  if (!validRooms.includes(room)) {
-    return (
-      <div className="card max-w-md mx-auto text-center py-12 mt-8">
-        <AlertTriangle size={64} className="text-red-500 mx-auto mb-6" />
-        <h2 className="text-2xl font-bold text-slate-800 mb-3">ห้องไม่ถูกต้อง</h2>
-        <p className="text-slate-500 mb-8">ไม่พบข้อมูลห้อง {room} ในระบบ</p>
-        <button className="btn btn-primary w-full" onClick={() => navigate('/')}>
-          กลับสู่หน้าหลัก
-        </button>
-      </div>
-    );
-  }
+  const handleRoomChange = (e) => {
+    navigate(`/check/${e.target.value}`);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const result = await submitScore(room, score);
+      const result = await submitScore(currentRoom, score);
       
       if (result.status === 'success') {
         MySwal.fire({
@@ -79,8 +71,23 @@ function CheckScore() {
   return (
     <div className="card max-w-md mx-auto mt-8">
       <div className="text-center mb-8 border-b border-slate-100 pb-6">
-        <p className="text-slate-500 font-medium mb-1">แบบประเมินความสะอาด</p>
-        <h2 className="text-3xl font-bold text-slate-800">ห้อง {room}</h2>
+        <p className="text-slate-500 font-medium mb-2">แบบประเมินความสะอาด</p>
+        <div className="inline-block relative w-48">
+          <select 
+            value={currentRoom}
+            onChange={handleRoomChange}
+            className="block appearance-none w-full bg-white border-2 border-slate-200 text-slate-800 py-3 px-4 pr-8 rounded-xl leading-tight focus:outline-none focus:bg-white focus:border-blue-500 text-2xl font-bold text-center cursor-pointer transition-colors"
+          >
+            {validRooms.map(r => (
+              <option key={r} value={r}>ห้อง {r}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+          </div>
+        </div>
       </div>
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">

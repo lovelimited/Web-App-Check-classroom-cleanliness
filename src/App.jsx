@@ -30,7 +30,7 @@ function App() {
               QR Code
             </NavLink>
             <NavLink 
-              to="/check/ม.1" 
+              to="/check" 
               className={({ isActive }) => `flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
             >
               <CheckSquare size={18} />
@@ -42,6 +42,7 @@ function App() {
         <main className="flex-grow animate-in fade-in duration-500">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/check" element={<CheckScore />} />
             <Route path="/check/:room" element={<CheckScore />} />
             <Route path="/qrcodes" element={<QRCodes />} />
           </Routes>
