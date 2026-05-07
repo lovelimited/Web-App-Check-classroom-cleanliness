@@ -5,8 +5,8 @@ import { Printer } from 'lucide-react';
 function QRCodes() {
   const rooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
   
-  const baseUrl = window.location.origin;
-
+  // ใช้ origin + pathname เพื่อให้รองรับ Subfolder ใน GitHub Pages และเติม # สำหรับ HashRouter
+  const basePath = (window.location.origin + window.location.pathname).replace(/\/$/, '');
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center max-w-2xl mx-auto">
@@ -26,7 +26,7 @@ function QRCodes() {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {rooms.map((room) => {
-          const checkUrl = `${baseUrl}/check/${room}`;
+          const checkUrl = `${basePath}/#/check/${room}`;
           return (
             <div key={room} className="card flex flex-col items-center justify-center p-8 hover:shadow-lg transition-shadow duration-300">
               <div className="bg-white p-4 border-2 border-slate-100 rounded-xl mb-6">

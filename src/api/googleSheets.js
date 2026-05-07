@@ -1,5 +1,5 @@
 // Replace with the URL from Google Apps Script deployment
-export const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+export const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyhwecljd_plbYsMrksqWPmSfWCel-d4w6yh8t90Z31h0UwiyY5nA3SPQ-UXNrBQJXlcg/exec";
 
 export const fetchScores = async () => {
   if (WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
