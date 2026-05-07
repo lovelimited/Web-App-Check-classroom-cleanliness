@@ -71,10 +71,19 @@ function doPost(e) {
     if (lastRow > 1) {
       const existingData = sheet.getRange(2, 2, lastRow - 1, 3).getValues(); // Col 2 (Date), Col 4 (Room)
       for (let i = 0; i < existingData.length; i++) {
-        if (existingData[i][0] === dateStr && existingData[i][2] === room) {
+        let cellDate = existingData[i][0];
+        let cellRoom = existingData[i][2];
+        
+        // แปลงวันที่จาก Cell ให้เป็น String YYYY-MM-DD เพื่อเปรียบเทียบ
+        let cellDateStr = cellDate;
+        if (cellDate instanceof Date) {
+          cellDateStr = cellDate.getFullYear() + "-" + String(cellDate.getMonth() + 1).padStart(2, '0') + "-" + String(cellDate.getDate()).padStart(2, '0');
+        }
+        
+        if (cellDateStr === dateStr && cellRoom === room) {
           return ContentService.createTextOutput(JSON.stringify({
             status: "error",
-            message: "Room already checked today"
+            message: "ห้องนี้ถูกเช็คไปแล้วในวันนี้"
           })).setMimeType(ContentService.MimeType.JSON);
         }
       }
