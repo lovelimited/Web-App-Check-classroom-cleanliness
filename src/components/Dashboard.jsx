@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, LabelList } from 'recharts';
 import { fetchScores } from '../api/googleSheets';
 import { RefreshCw, TrendingUp, Award, CheckCircle, XCircle } from 'lucide-react';
 
@@ -83,11 +83,13 @@ function Dashboard() {
   const getDailyData = () => {
     const dailyMap = {};
     data.forEach(item => {
-      if (!dailyMap[item.date]) {
-        dailyMap[item.date] = { date: item.date, total: 0, count: 0 };
+      // รองรับทั้งแบบ String YYYY-MM-DD และแบบ ISO String
+      const date = typeof item.date === 'string' ? item.date.split('T')[0] : item.date;
+      if (!dailyMap[date]) {
+        dailyMap[date] = { date, total: 0, count: 0 };
       }
-      dailyMap[item.date].total += item.score;
-      dailyMap[item.date].count += 1;
+      dailyMap[date].total += item.score;
+      dailyMap[date].count += 1;
     });
     
     return Object.values(dailyMap).map(d => ({
@@ -115,11 +117,13 @@ function Dashboard() {
   const getMonthlyData = () => {
     const monthMap = {};
     data.forEach(item => {
-      if (!monthMap[item.month]) {
-        monthMap[item.month] = { month: item.month, total: 0, count: 0 };
+      // บังคับให้เป็นรูปแบบ YYYY-MM เสมอเพื่อตัดปัญหา ISO string
+      const month = typeof item.month === 'string' ? item.month.slice(0, 7) : item.month;
+      if (!monthMap[month]) {
+        monthMap[month] = { month, total: 0, count: 0 };
       }
-      monthMap[item.month].total += item.score;
-      monthMap[item.month].count += 1;
+      monthMap[month].total += item.score;
+      monthMap[month].count += 1;
     });
     
     return Object.values(monthMap).map(m => ({
@@ -229,7 +233,9 @@ function Dashboard() {
                     <XAxis dataKey="room" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dy={10} />
                     <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
                     <Tooltip content={<CustomTooltip />} cursor={{fill: '#f1f5f9'}} />
-                    <Bar dataKey="average" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40} />
+                    <Bar dataKey="average" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40}>
+                      <LabelList dataKey="average" position="top" style={{ fill: '#3b82f6', fontWeight: 'bold', fontSize: '12px' }} offset={10} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -244,7 +250,9 @@ function Dashboard() {
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} tickFormatter={(tick) => tick.slice(5)} dy={10} />
                     <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line type="monotone" dataKey="average" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="average" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0 }}>
+                      <LabelList dataKey="average" position="top" style={{ fill: '#8b5cf6', fontWeight: 'bold', fontSize: '10px' }} offset={10} />
+                    </Line>
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -259,7 +267,9 @@ function Dashboard() {
                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dy={10} />
                     <YAxis domain={[0, 10]} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
                     <Tooltip content={<CustomTooltip />} cursor={{fill: '#f1f5f9'}} />
-                    <Bar dataKey="average" fill="#10b981" radius={[6, 6, 0, 0]} barSize={50} />
+                    <Bar dataKey="average" fill="#10b981" radius={[6, 6, 0, 0]} barSize={50}>
+                      <LabelList dataKey="average" position="top" style={{ fill: '#10b981', fontWeight: 'bold', fontSize: '12px' }} offset={10} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
