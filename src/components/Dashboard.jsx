@@ -61,14 +61,21 @@ function Dashboard() {
 
   const getTodayStatus = () => {
     const today = getTodayStr();
-    const todayData = data.filter(item => item.date === today);
+    const todayData = data.filter(item => {
+      // รองรับทั้งแบบ String YYYY-MM-DD และแบบ ISO String จาก GAS
+      const itemDate = typeof item.date === 'string' ? item.date.split('T')[0] : item.date;
+      return itemDate === today;
+    });
     
     return rooms.map(room => {
-      const entry = todayData.find(d => d.room === room);
+      // หาข้อมูลล่าสุดของห้องนั้นในวันนี้ (กรณีมีการกรอกซ้ำหรือแก้ไข)
+      const roomEntries = todayData.filter(d => d.room === room);
+      const latestEntry = roomEntries.length > 0 ? roomEntries[roomEntries.length - 1] : null;
+      
       return {
         room: room,
-        score: entry ? entry.score : '-',
-        isChecked: !!entry
+        score: latestEntry ? latestEntry.score : '-',
+        isChecked: !!latestEntry
       };
     });
   };

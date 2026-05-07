@@ -109,15 +109,24 @@ function doGet(e) {
     
     if (lastRow > 1) {
       const data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
-      records = data.map(row => ({
-        timestamp: row[0],
-        date: row[1],
-        time: row[2],
-        room: row[3],
-        score: row[4],
-        month: row[5],
-        academicYear: row[6]
-      }));
+      records = data.map(row => {
+        // จัดการเรื่องวันที่ให้เป็น String รูปแบบ YYYY-MM-DD เสมอ
+        let d = row[1];
+        let dateStr = d;
+        if (d instanceof Date) {
+          dateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+        }
+
+        return {
+          timestamp: row[0],
+          date: dateStr,
+          time: row[2],
+          room: row[3],
+          score: row[4],
+          month: row[5],
+          academicYear: row[6]
+        };
+      });
     }
     
     return ContentService.createTextOutput(JSON.stringify({
