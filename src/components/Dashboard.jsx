@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { fetchScores } from '../api/googleSheets';
-import { RefreshCw, TrendingUp, Award } from 'lucide-react';
+import { RefreshCw, TrendingUp, Award, CheckCircle, XCircle } from 'lucide-react';
 
 function Dashboard() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const rooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
 
   const loadData = async () => {
     setLoading(true);
@@ -31,7 +32,6 @@ function Dashboard() {
 
   const generateMockData = () => {
     const mock = [];
-    const rooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
     const now = new Date();
     
     for (let i = 29; i >= 0; i--) {
@@ -52,6 +52,25 @@ function Dashboard() {
       });
     }
     return mock;
+  };
+
+  const getTodayStr = () => {
+    const now = new Date();
+    return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
+  };
+
+  const getTodayStatus = () => {
+    const today = getTodayStr();
+    const todayData = data.filter(item => item.date === today);
+    
+    return rooms.map(room => {
+      const entry = todayData.find(d => d.room === room);
+      return {
+        room: room,
+        score: entry ? entry.score : '-',
+        isChecked: !!entry
+      };
+    });
   };
 
   const getDailyData = () => {
@@ -137,6 +156,37 @@ function Dashboard() {
         </div>
       ) : (
         <>
+          {/* Section: Today Status */}
+          <div className="card border-none bg-white p-0 overflow-hidden">
+            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="font-bold text-slate-800">สถานะการเช็คความสะอาดประจำวัน ({getTodayStr()})</h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                {getTodayStatus().map((item) => (
+                  <div key={item.room} className={`p-4 rounded-2xl border-2 transition-all ${
+                    item.isChecked ? 'border-green-100 bg-green-50/30' : 'border-red-100 bg-red-50/30'
+                  }`}>
+                    <p className="text-sm font-bold text-slate-500 mb-1">ห้อง {item.room}</p>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-2xl font-black ${item.isChecked ? 'text-green-600' : 'text-red-500'}`}>
+                        {item.score}
+                      </span>
+                      {item.isChecked ? (
+                        <CheckCircle size={20} className="text-green-500" />
+                      ) : (
+                        <XCircle size={20} className="text-red-500" />
+                      )}
+                    </div>
+                    {!item.isChecked && (
+                      <p className="text-[10px] font-bold text-red-500 uppercase mt-1">ยังไม่ได้กรอก</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="card flex items-center gap-5">
               <div className="bg-blue-50 p-4 rounded-full">
