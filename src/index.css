@@ -6,29 +6,111 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-800 font-sans antialiased selection:bg-blue-200;
+    @apply bg-[#f8fafc] text-slate-800 font-sans antialiased selection:bg-blue-200;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Prevent pull-to-refresh on mobile */
+  html {
+    overscroll-behavior: none;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    /* Larger touch targets on mobile */
+    min-height: 44px;
   }
   
   .btn-primary {
-    @apply bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:hover:shadow-none;
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-blue-500/20 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply active:scale-[0.96] hover:-translate-y-0.5;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300;
+    @apply active:scale-[0.96] hover:-translate-y-0.5;
   }
   
   .card {
-    @apply bg-white rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100;
+    @apply bg-white/80 backdrop-blur-md rounded-2xl p-4 md:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20;
+    @apply transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-1;
   }
 }
 
-/* Custom range slider styling for CheckScore */
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Safe area insets for notched phones */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Custom range slider styling */
 input[type="range"] {
-  @apply w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer outline-none;
+  @apply w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer outline-none transition-all;
+  touch-action: manipulation;
 }
 
 input[type="range"]::-webkit-slider-thumb {
-  @apply appearance-none w-6 h-6 rounded-full bg-blue-600 shadow-md transition-transform duration-100 hover:scale-110;
+  @apply appearance-none w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg border-2 border-white transition-all duration-200;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  @apply scale-125 shadow-blue-500/40;
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Smooth scrolling */
+* {
+  scroll-behavior: smooth;
 }

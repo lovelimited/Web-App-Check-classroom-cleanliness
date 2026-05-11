@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Save, CheckCircle, Clock } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { submitScore, fetchScores } from '../api/googleSheets';
+import { submitScore, fetchScores, invalidateCache } from '../api/googleSheets';
+import confetti from 'canvas-confetti';
 
 const MySwal = withReactContent(Swal);
 
+const rooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
+
 function CheckOverview() {
-  const rooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
-  
   const [scores, setScores] = useState(
     rooms.reduce((acc, room) => ({ ...acc, [room]: 5 }), {})
   );
@@ -23,8 +24,8 @@ function CheckOverview() {
     return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
   };
 
-  const loadCurrentStatus = async () => {
-    setIsInitialLoading(true);
+  const loadCurrentStatus = useCallback(async (isInitial = false) => {
+    if (!isInitial) setIsInitialLoading(true);
     const allData = await fetchScores();
     const today = getTodayStr();
     
@@ -37,11 +38,16 @@ function CheckOverview() {
     
     setCheckedStatus(status);
     setIsInitialLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    loadCurrentStatus();
-  }, []);
+    let isMounted = true;
+    const init = async () => {
+      await loadCurrentStatus(true);
+    };
+    if (isMounted) init();
+    return () => { isMounted = false; };
+  }, [loadCurrentStatus]);
 
   const handleScoreChange = (room, value) => {
     setScores(prev => ({ ...prev, [room]: parseFloat(value) }));
@@ -54,6 +60,14 @@ function CheckOverview() {
       const result = await submitScore(room, scores[room]);
       
       if (result.status === 'success') {
+        // 🎉 Confetti!
+        confetti({
+          particleCount: 100,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#3b82f6', '#10b981']
+        });
+
         MySwal.fire({
           title: 'สำเร็จ!',
           text: `บันทึกคะแนนห้อง ${room} เรียบร้อยแล้ว`,
@@ -66,6 +80,7 @@ function CheckOverview() {
         });
         // อัปเดตสถานะว่าเช็คแล้วทันที
         setCheckedStatus(prev => ({ ...prev, [room]: true }));
+        invalidateCache();
       } else {
         MySwal.fire({
           title: 'เกิดข้อผิดพลาด',
@@ -76,7 +91,7 @@ function CheckOverview() {
           customClass: { popup: 'rounded-2xl' }
         });
       }
-    } catch (err) {
+    } catch {
       MySwal.fire({
         title: 'การเชื่อมต่อขัดข้อง',
         text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง',
@@ -90,111 +105,101 @@ function CheckOverview() {
     }
   };
 
-  if (isInitialLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-slate-500 font-medium">กำลังโหลดสถานะล่าสุด...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-8">
-      <div className="text-center max-w-2xl mx-auto">
-        <h2 className="text-3xl font-bold text-slate-800 mb-4">ภาพรวมการให้คะแนน</h2>
-        <p className="text-slate-500 text-lg">
-          ตรวจสอบและให้คะแนนความสะอาดของทุกห้องเรียนประจำวัน
-        </p>
+    <div className="flex flex-col gap-8 animate-slide-up">
+      <div className="text-center max-w-2xl mx-auto animate-fade-in">
+        <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-4 tracking-tight">รายการเช็ครายห้อง</h2>
+        <p className="text-slate-500 font-medium text-lg">ประเมินความสะอาดของแต่ละห้องเรียนประจำวันนี้</p>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
-        {rooms.map((room) => {
-          const isLoading = loadingStates[room];
-          const isChecked = checkedStatus[room];
-          const currentScore = scores[room];
+      {isInitialLoading ? (
+        <div className="flex flex-col items-center justify-center py-24 animate-fade-in">
+          <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-6"></div>
+          <p className="text-slate-400 font-medium tracking-wide">กำลังเตรียมข้อมูลล่าสุด...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full pb-10 px-2">
+          {rooms.map((room, idx) => {
+            const isLoading = loadingStates[room];
+            const isChecked = checkedStatus[room];
+            const currentScore = scores[room];
 
-          return (
-            <div 
-              key={room} 
-              className={`card bg-white p-6 md:p-8 flex flex-col gap-6 transition-all border-2 ${
-                isChecked ? 'border-green-100 bg-green-50/10' : 'border-slate-100'
-              }`}
-            >
-              <div className="flex justify-between items-start border-b border-slate-50 pb-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-800">ห้อง {room}</h3>
-                  <div className="mt-2">
-                    {isChecked ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider">
-                        <CheckCircle size={14} />
-                        บันทึกแล้ว
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider">
-                        <Clock size={14} />
-                        ยังไม่ได้กรอก
-                      </span>
-                    )}
+            return (
+              <div 
+                key={room} 
+                className={`card bg-white p-6 md:p-8 flex flex-col gap-6 transition-all border-2 animate-slide-up card-hover ${
+                  isChecked ? 'border-slate-200 bg-slate-50 opacity-60 grayscale cursor-not-allowed shadow-none' : 'border-slate-100 hover:border-blue-200 shadow-xl'
+                }`}
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="flex justify-between items-start border-b border-slate-50 pb-4">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800">ห้อง {room}</h3>
+                    <div className="mt-2">
+                      {isChecked ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider">
+                          <CheckCircle size={12} />
+                          บันทึกแล้ว
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                          <Clock size={12} />
+                          รอการเช็ค
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <span className={`text-4xl font-black italic tracking-tighter ${isChecked ? 'text-slate-300' : 'text-blue-600'}`}>
+                    {currentScore}
+                  </span>
                 </div>
-                <span className={`text-3xl font-black ${isChecked ? 'text-green-600' : 'text-blue-600'}`}>
-                  {currentScore}
-                </span>
-              </div>
 
-              <div className="flex flex-col gap-4">
-                <div className="px-1">
+                <div className={isChecked ? 'pointer-events-none' : ''}>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">ระดับความสะอาด</span>
+                  </div>
                   <input 
                     type="range" 
                     min="1" 
                     max="10" 
                     step="0.5" 
                     value={currentScore} 
-                    onChange={(e) => handleScoreChange(room, e.target.value)} 
+                    onChange={(e) => handleScoreChange(room, e.target.value)}
                     disabled={isLoading || isChecked}
-                    className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${
-                      isChecked ? 'bg-green-100 accent-green-600' : 'bg-slate-100 accent-blue-600'
-                    }`}
+                    className="w-full"
                   />
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2 px-1 uppercase tracking-wider">
-                    <span>1</span>
-                    <span>5</span>
-                    <span>10</span>
+                  <div className="flex justify-between text-[9px] font-black text-slate-400 mt-4 uppercase tracking-tighter opacity-70">
+                    <span>ควรปรับปรุง</span>
+                    <span>ปานกลาง</span>
+                    <span>สะอาดมาก</span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => handleSubmit(room)}
                   disabled={isLoading || isChecked}
-                  className={`btn w-full py-3 text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all ${
+                  className={`btn w-full py-4 text-lg font-black shadow-lg transition-all ${
                     isChecked 
-                      ? 'bg-green-100 text-green-600 cursor-default shadow-none border-none' 
-                      : 'btn-primary shadow-blue-500/20'
+                      ? 'bg-slate-200 text-slate-400 shadow-none' 
+                      : 'btn-primary'
                   }`}
                 >
                   {isLoading ? (
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <RefreshCw size={22} className="animate-spin text-white" />
                   ) : isChecked ? (
-                    <>
-                      <CheckCircle size={18} />
-                      เรียบร้อยแล้ว
-                    </>
+                    'เรียบร้อยแล้ว'
                   ) : (
                     <>
-                      <Save size={18} />
+                      <Save size={20} />
                       บันทึกคะแนน
                     </>
                   )}
                 </button>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

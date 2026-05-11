@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -29,35 +29,35 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="card w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
+    <div className="flex flex-col items-center justify-center py-12 px-4 animate-slide-up">
+      <div className="card w-full max-w-md p-8 md:p-10 bg-white/90 backdrop-blur-xl shadow-2xl border-white animate-fade-in card-hover">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
-            <Lock size={32} />
+          <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20 rotate-3 animate-float">
+            <Lock size={36} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800">เข้าสู่ระบบ Admin</h2>
-          <p className="text-slate-500 text-center mt-2">
-            กรุณาใส่รหัสผ่านเพื่อจัดการ QR Code และภาพรวมการเช็คคะแนน
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Admin Login</h2>
+          <p className="text-slate-500 text-center mt-3 font-medium">
+            กรุณาใส่รหัสผ่านเพื่อเข้าถึงระบบจัดการ
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              รหัสผ่าน
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+              รหัสผ่านผู้ดูแลระบบ
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+              className="w-full px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-blue-500 bg-slate-50 focus:bg-white transition-all outline-none text-lg font-medium"
               placeholder="••••••••"
               required
             />
           </div>
           <button
             type="submit"
-            className="btn btn-primary w-full py-3 text-lg font-medium shadow-md shadow-blue-500/30"
+            className="btn btn-primary w-full py-4 text-xl font-black shadow-xl shadow-blue-500/30"
           >
             เข้าสู่ระบบ
           </button>

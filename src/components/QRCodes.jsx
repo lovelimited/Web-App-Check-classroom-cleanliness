@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Printer, Download, X, ZoomIn } from 'lucide-react';
 
@@ -11,7 +11,6 @@ function QRCodes() {
   const basePath = (window.location.origin + window.location.pathname).replace(/\/$/, '');
 
   const handleDownload = useCallback((room) => {
-    const checkUrl = `${basePath}/#/check/${room}`;
     // Create an offscreen SVG QR, render to canvas, then download as PNG
     const svgContainer = document.createElement('div');
     svgContainer.style.position = 'absolute';
@@ -63,7 +62,7 @@ function QRCodes() {
       link.click();
     };
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-  }, [basePath, selectedRoom]);
+  }, [selectedRoom]);
 
   return (
     <div className="flex flex-col gap-8">
