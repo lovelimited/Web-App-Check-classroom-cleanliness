@@ -66,6 +66,38 @@ function rebuildCache() {
 
 function doGet(e) {
   try {
+    const action = e.parameter.action;
+    
+    // Action: Rebuild Cache manually
+    if (action === "rebuild") {
+      return ContentService.createTextOutput(JSON.stringify(rebuildCache()))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Action: Check specific room status (for CheckScore page)
+    if (action === "check") {
+      const room = e.parameter.room;
+      const date = e.parameter.date;
+      const { cacheSheet } = setupSheet();
+      const cacheValue = cacheSheet.getRange("A1").getValue();
+      let isChecked = false;
+      let score = 0;
+      
+      if (cacheValue && cacheValue !== "") {
+        try {
+          const cache = JSON.parse(cacheValue);
+          const record = cache.data.find(r => r.room === room && r.date === date);
+          if (record) {
+            isChecked = true;
+            score = record.score;
+          }
+        } catch(e) {}
+      }
+      return ContentService.createTextOutput(JSON.stringify({ isChecked, score }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Default: Return full data cache
     const { cacheSheet } = setupSheet();
     const cacheValue = cacheSheet.getRange("A1").getValue();
     

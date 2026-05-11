@@ -49,8 +49,6 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
  *  1) If cache exists & fresh → return cache instantly
  *  2) Otherwise → fetch from GAS (with 15s timeout)
  *  3) Always update cache on success
- *
- * @param {boolean} forceRefresh - skip cache and fetch fresh data
  */
 export const fetchScores = async (forceRefresh = false) => {
   if (WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
@@ -58,18 +56,12 @@ export const fetchScores = async (forceRefresh = false) => {
     return [];
   }
 
-  // 1) Try cache first (unless forced refresh)
   if (!forceRefresh) {
     const cached = getCachedData();
-    if (cached) {
-      console.log("📦 Using cached data");
-      return cached;
-    }
+    if (cached) return cached;
   }
 
-  // 2) Fetch from server
   try {
-    console.log("🌐 Fetching from server...");
     const response = await fetchWithTimeout(WEB_APP_URL, {}, 15000);
     const result = await response.json();
     if (result.status === "success") {
@@ -80,20 +72,12 @@ export const fetchScores = async (forceRefresh = false) => {
     }
   } catch (error) {
     console.error("Error fetching scores:", error);
-    // Fallback: return stale cache if available
     const stale = getCachedData();
-    if (stale) {
-      console.log("⚠️ Using stale cache as fallback");
-      return stale;
-    }
+    if (stale) return stale;
     return [];
   }
 };
 
-/**
- * Fetch fresh data in background (non-blocking).
- * Useful to refresh cache while showing stale data.
- */
 export const prefetchScores = async () => {
   try {
     const response = await fetchWithTimeout(WEB_APP_URL, {}, 15000);
@@ -103,9 +87,26 @@ export const prefetchScores = async () => {
       return result.data;
     }
   } catch {
-    // silent fail — this is a background refresh
+    // silent fail
   }
   return null;
+};
+
+/**
+ * Trigger manual cache rebuild on GAS side
+ */
+export const rebuildServerCache = async () => {
+  try {
+    const response = await fetchWithTimeout(`${WEB_APP_URL}?action=rebuild`, {}, 30000);
+    const result = await response.json();
+    if (result.status === "success") {
+      setCachedData(result.data);
+      return result;
+    }
+    return result;
+  } catch (error) {
+    return { status: "error", message: error.message };
+  }
 };
 
 export const checkRoomStatus = async (room, date) => {
@@ -126,29 +127,18 @@ export const checkRoomStatus = async (room, date) => {
 };
 
 export const submitScore = async (room, score) => {
-  if (WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
-    console.warn("Please update WEB_APP_URL in src/api/googleSheets.js");
-    return { status: "error", message: "Web App URL not set" };
-  }
+  if (WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") return { status: "error" };
   
   try {
     const response = await fetchWithTimeout(WEB_APP_URL, {
       method: "POST",
       body: JSON.stringify({ room, score }),
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      }
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
     }, 20000);
     const result = await response.json();
-    
-    // Invalidate cache after successful submit so next load gets fresh data
-    if (result.status === "success") {
-      invalidateCache();
-    }
-    
+    if (result.status === "success") invalidateCache();
     return result;
   } catch (error) {
-    console.error("Error submitting score:", error);
     return { status: "error", message: error.message };
   }
 };

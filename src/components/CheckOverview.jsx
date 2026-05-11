@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Save, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { submitScore, fetchScores, invalidateCache } from '../api/googleSheets';
+import { submitScore, fetchScores, invalidateCache, rebuildServerCache } from '../api/googleSheets';
 import confetti from 'canvas-confetti';
+import { Database } from 'lucide-react';
 
 const MySwal = withReactContent(Swal);
 
@@ -18,6 +19,35 @@ function CheckOverview() {
   );
   const [checkedStatus, setCheckedStatus] = useState({});
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRebuilding, setIsRebuilding] = useState(false);
+
+  const handleRebuild = async () => {
+    setIsRebuilding(true);
+    try {
+      const result = await rebuildServerCache();
+      if (result.status === 'success') {
+        MySwal.fire({
+          title: 'รีบิลด์สำเร็จ!',
+          text: 'ข้อมูลในระบบซิงค์กับ Google Sheets เรียบร้อยแล้ว',
+          icon: 'success',
+          confirmButtonColor: '#3b82f6',
+          timer: 2000
+        });
+        await loadCurrentStatus(true);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      MySwal.fire({
+        title: 'รีบิลด์ไม่สำเร็จ',
+        text: err.message,
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
+      setIsRebuilding(false);
+    }
+  };
 
   const getTodayStr = () => {
     const now = new Date();
@@ -107,9 +137,19 @@ function CheckOverview() {
 
   return (
     <div className="flex flex-col gap-8 animate-slide-up">
-      <div className="text-center max-w-2xl mx-auto animate-fade-in">
-        <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-4 tracking-tight">รายการเช็ครายห้อง</h2>
-        <p className="text-slate-500 font-medium text-lg">ประเมินความสะอาดของแต่ละห้องเรียนประจำวันนี้</p>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 md:p-10 rounded-[2rem] shadow-sm border border-slate-100">
+        <div className="text-center md:text-left animate-fade-in">
+          <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">รายการเช็ครายห้อง</h2>
+          <p className="text-slate-500 font-medium">ประเมินความสะอาดของแต่ละห้องเรียนประจำวันนี้</p>
+        </div>
+        <button
+          onClick={handleRebuild}
+          disabled={isRebuilding || isInitialLoading}
+          className="btn btn-secondary text-sm px-5 py-3 border-slate-200 hover:border-blue-300 hover:text-blue-600 transition-all flex items-center gap-2 group"
+        >
+          <Database size={18} className={isRebuilding ? 'animate-bounce' : 'group-hover:rotate-12 transition-transform'} />
+          {isRebuilding ? 'กำลังรีบิลด์...' : 'รีบิลด์ Cache'}
+        </button>
       </div>
       
       {isInitialLoading ? (
