@@ -25,17 +25,22 @@ function CheckScore() {
   const checkStatus = async () => {
     setIsInitialLoading(true);
     try {
+      // ดึงข้อมูลจาก Cache (ซึ่งตอนนี้เร็วมากแล้ว)
       const allData = await fetchScores();
       const today = getTodayStr();
-      const alreadyChecked = allData.some(entry => {
-        const entryDate = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date;
+      
+      // ค้นหาจากท้ายตาราง (ข้อมูลล่าสุด) จะเร็วกว่าในกรณีข้อมูลเยอะ
+      const alreadyChecked = [...allData].reverse().some(entry => {
+        const entryDate = typeof entry.date === 'string' ? entry.date.split(' ')[0] : entry.date;
         return entryDate === today && entry.room === room;
       });
+      
       setIsChecked(alreadyChecked);
     } catch (error) {
       console.error("Check status error:", error);
     } finally {
-      setIsInitialLoading(false);
+      // เพิ่ม delay เล็กน้อยเพื่อให้ UI ไม่กระพริบเร็วเกินไป
+      setTimeout(() => setIsInitialLoading(false), 300);
     }
   };
 

@@ -21,6 +21,19 @@ export const fetchScores = async () => {
   }
 };
 
+export const checkRoomStatus = async (room, date) => {
+  if (WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") return { isChecked: false };
+  
+  try {
+    const response = await fetch(`${WEB_APP_URL}?action=check&room=${encodeURIComponent(room)}&date=${date}`);
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error checking status:", error);
+    return { isChecked: false };
+  }
+};
+
 export const submitScore = async (room, score) => {
   if (WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
     console.warn("Please update WEB_APP_URL in src/api/googleSheets.js");
