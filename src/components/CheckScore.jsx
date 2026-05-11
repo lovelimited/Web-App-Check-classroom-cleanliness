@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, AlertTriangle, CheckCircle, Home } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -15,21 +15,19 @@ function CheckScore() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
 
-  const validRooms = ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
+  const validRooms = useMemo(() => ["ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"], []);
 
   const getTodayStr = () => {
     const now = new Date();
     return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
   };
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     setIsInitialLoading(true);
     try {
-      // ดึงข้อมูลจาก Cache (ซึ่งตอนนี้เร็วมากแล้ว)
       const allData = await fetchScores();
       const today = getTodayStr();
       
-      // ค้นหาจากท้ายตาราง (ข้อมูลล่าสุด) จะเร็วกว่าในกรณีข้อมูลเยอะ
       const alreadyChecked = [...allData].reverse().some(entry => {
         const entryDate = typeof entry.date === 'string' ? entry.date.split(' ')[0] : entry.date;
         return entryDate === today && entry.room === room;
@@ -39,16 +37,15 @@ function CheckScore() {
     } catch (error) {
       console.error("Check status error:", error);
     } finally {
-      // เพิ่ม delay เล็กน้อยเพื่อให้ UI ไม่กระพริบเร็วเกินไป
       setTimeout(() => setIsInitialLoading(false), 300);
     }
-  };
+  }, [room]);
 
   useEffect(() => {
     if (validRooms.includes(room)) {
       checkStatus();
     }
-  }, [room]);
+  }, [room, checkStatus, validRooms]);
 
   if (!validRooms.includes(room)) {
     return (
@@ -121,6 +118,7 @@ function CheckScore() {
         });
       }
     } catch (err) {
+      console.error("Submit error:", err);
       MySwal.fire({
         title: 'การเชื่อมต่อขัดข้อง',
         text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง',
